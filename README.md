@@ -10,9 +10,9 @@
 
 - Audio and video recording will continue until you enter ``q`` into terminal
 - Video data can be collected from multiple cameras simultaneously. To add/remove cameras, modify the ``CAMERA_IDS`` and ``CAMERA_OUTPUT_FILES`` lists in ``record_audio-video.py``. 
-- To change the file name for audio, modify ``AUDIO_OUTPUT_FILE``.
 - Modify the number of audio channels by editing ``NUM_CHANNELS``.
-
+- Each audio channel is saved to a separate .wav file. Their names follow the pattern: ``{self.output_file}_ch{ch+1}.wav``. 
+- To change the audio output file name, modify ``AUDIO_OUTPUT_FILE`` in ``record_audio-video.py``.
 
 <!-- ### ``people_boxes.py``
 Run this file to track the positions of team members over time. 
