@@ -4,7 +4,7 @@ import soundfile as sf
 import threading
 import queue
 class AudioRecorder:
-    def __init__(self, output_file='output_audio.wav', samplerate=44100, channels=1): 
+    def __init__(self, output_file='output_audio', samplerate=44100, channels=1): 
         self.output_file = output_file
         self.samplerate = samplerate
         self.channels = channels
@@ -17,16 +17,6 @@ class AudioRecorder:
             print(f"[WARN] Audio status: {status}")
         self.q.put(indata.copy())
 
-    # def _record_audio(self):
-    #     with sf.SoundFile(self.output_file, mode='w', samplerate=self.samplerate,
-    #                       channels=self.channels) as file:
-    #         with sd.InputStream(samplerate=self.samplerate, channels=self.channels,
-    #                             callback=self._callback):
-    #             print(f"[INFO] Recording audio to '{self.output_file}'...")
-    #             while not self.stop_event.is_set():
-    #                 file.write(self.q.get())
-
-    #     print("[INFO] Audio recording stopped.")
     def _record_audio(self):
         # Create one SoundFile per channel
         files = [
