@@ -16,6 +16,14 @@ class StartGUI:
         self.root.title("Multi-Camera Selector")
         self.root.geometry("300x250")
 
+        # Save Location
+        self.save_location_label = tk.Label(self.root, text="Enter desired save location:")
+        self.save_location_label.pack()
+        self.save_location = tk.Entry(self.root)
+        self.save_location.insert(0, "") # enter default value
+        self.save_location.pack(pady=5)
+        
+
         # Start button
         self.start_button = tk.Button(self.root, text="Start", command=self._on_start_wrapper)
         self.start_button.pack(pady=10)
@@ -32,12 +40,9 @@ class StartGUI:
         self.num_channels.pack(pady=5)
         
 
-
-        # Camera selection label
+        # Camera selection 
         self.camera_label = tk.Label(self.root, text="Select Cameras:")
         self.camera_label.pack()
-
-        # Multi-selection Listbox for cameras
         self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
         self.camera_listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE, height=5)
         for cam in self.camera_options:
@@ -69,6 +74,7 @@ class StartGUI:
         asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
 
     async def _on_start(self):
+        self.SAVE_LOCATION = self.save_location.get()
         selected_indices = self.camera_listbox.curselection()
         self.CAMERA_IDS = [self.camera_options[i] for i in selected_indices]
         self.NUM_CHANNELS = int(self.num_channels.get())
@@ -91,11 +97,10 @@ class StartGUI:
 
     async def record_audio_video(self):
         print("recording audio video")
-        CAMERA_OUTPUT_FILES = [f"camera{num}.mp4" for num in self.CAMERA_IDS]
+        CAMERA_OUTPUT_FILES = [f"{self.SAVE_LOCATION}camera{num}.mp4" for num in self.CAMERA_IDS]
 
-        AUDIO_OUTPUT_FILE = "output_audio"
-
-        self.audio_recorder = AudioRecorder(output_file=AUDIO_OUTPUT_FILE, channels=self.NUM_CHANNELS)
+        self.audio_recorder = AudioRecorder(save_location=self.SAVE_LOCATION, channels=self.NUM_CHANNELS)
+        print("audio recorded")
         self.video_recorder = VideoRecorder(
             self.CAMERA_IDS,  
             CAMERA_OUTPUT_FILES
