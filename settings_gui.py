@@ -19,14 +19,14 @@ class StartGUI:
         self.root.title("Multi-Camera Selector")
         self.root.geometry("330x400")
 
+        self.recording = False
+
         # Start button
         self.start_button = tk.Button(self.root, text="Record ▶", command=self._on_start_wrapper, width=30, bg="skyblue", fg="black", activebackground="deepskyblue",  activeforeground="black")
-        # self.start_button.pack(pady=10)
         self.start_button.grid(row=0, column=0, columnspan=2, pady=10)
 
         # Stop Recording button
         stop_btn = tk.Button(self.root, text="Stop \u274C", command=self._on_stop, width=30, bg="salmon", fg="black", activebackground="tomato",  activeforeground="black")
-        # stop_btn.pack(side="top", pady=5)
         stop_btn.grid(row=1, column=0, columnspan=2, pady=10)
 
         separator = ttk.Separator(self.root, orient='horizontal')
@@ -106,6 +106,7 @@ class StartGUI:
         self.NUM_CHANNELS = int(self.num_channels.get())
         
         print("Async Start button clicked!")
+        self.toggle_recording()
         await self.record_audio_video()
         self.root.quit()
         self.root.destroy() 
@@ -114,6 +115,7 @@ class StartGUI:
     def _on_stop(self):
         self.audio_recorder.stop()
         self.video_recorder.stop()
+        self.toggle_recording()
         self.root.quit()
         self.root.destroy()    
         
@@ -136,6 +138,15 @@ class StartGUI:
             self.audio_recorder.record(),
             self.video_recorder.record()
         )
+
+    def toggle_recording(self):
+        self.recording = not self.recording
+        if self.recording:
+            self.record_label.config(text="● Recording", fg="red")
+            # self.toggle_button.config(text="Stop Recording")
+        else:
+            self.record_label.config(text="● Not Recording", fg="gray")
+            # self.toggle_button.config(text="Start Recording")
 
 # To run the GUI
 if __name__ == "__main__":
