@@ -7,6 +7,8 @@ from collect_audio import AudioRecorder
 from collect_video import VideoRecorder
 import cv2
 import sounddevice as sd
+from tkinter import ttk
+from tkinter import font
 
 class StartGUI:
     def __init__(self):
@@ -15,44 +17,61 @@ class StartGUI:
 
         self.root = tk.Tk()
         self.root.title("Multi-Camera Selector")
-        self.root.geometry("300x250")
-
-        # Save Location
-        # self.save_location_label = tk.Label(self.root, text="Enter desired save location:")
-        # self.save_location_label.pack()
-        # self.save_location = tk.Entry(self.root)
-        # self.save_location.insert(0, "") # enter default value
-        # self.save_location.pack(pady=5)
-        self.save_location = tk.Entry(self.root, width=50)
-        self.save_location.pack(padx=10, pady=10)
-        self.select_save_button = tk.Button(self.root, text="Select Save Location", command=self.select_save_location)
-        self.select_save_button.pack(padx=10, pady=10)
-        
+        self.root.geometry("330x400")
 
         # Start button
-        self.start_button = tk.Button(self.root, text="Start", command=self._on_start_wrapper)
-        self.start_button.pack(pady=10)
+        self.start_button = tk.Button(self.root, text="Record ▶", command=self._on_start_wrapper, width=30, bg="skyblue", fg="black", activebackground="deepskyblue",  activeforeground="black")
+        # self.start_button.pack(pady=10)
+        self.start_button.grid(row=0, column=0, columnspan=2, pady=10)
 
         # Stop Recording button
-        stop_btn = tk.Button(self.root, text="Stop Recording", command=self._on_stop)
-        stop_btn.pack(side="top", pady=5)
+        stop_btn = tk.Button(self.root, text="Stop \u274C", command=self._on_stop, width=30, bg="salmon", fg="black", activebackground="tomato",  activeforeground="black")
+        # stop_btn.pack(side="top", pady=5)
+        stop_btn.grid(row=1, column=0, columnspan=2, pady=10)
+
+        separator = ttk.Separator(self.root, orient='horizontal')
+        separator.grid(row=2, column=0, columnspan=2, sticky='ew', padx=10, pady=5)
+
+        # Save Location
+        self.save_location = ttk.Entry(self.root, width=15)
+        # self.save_location.pack(side="left", padx=10, pady=10)
+        self.save_location.grid(row=3, column=0, pady=10)
+
+        
+
+        self.select_save_button = tk.Button(self.root, text="Select Save Location", command=self.select_save_location)
+        # self.select_save_button.pack(side="right", padx=10, pady=10)
+        self.select_save_button.grid(row=3, column=1, pady=10)
 
         # Audio channel selection
-        self.audio_channels = tk.Label(self.root, text="Enter number of audio channels:")
-        self.audio_channels.pack()
+        self.audio_channels = tk.Label(self.root, text="# of audio channels:")
+        # self.audio_channels.pack(side="left")
+        self.audio_channels.grid(row=4, column=0, pady=10)
         self.num_channels = tk.Entry(self.root)
         self.num_channels.insert(0, "2") # enter default value
-        self.num_channels.pack(pady=5)
+        # self.num_channels.pack(side="left", pady=5)
+        self.num_channels.grid(row=4, column=1, pady=10)
         
 
         # Camera selection 
         self.camera_label = tk.Label(self.root, text="Select Cameras:")
-        self.camera_label.pack()
+        # self.camera_label.pack(side="left")
+        self.camera_label.grid(row=5, column=0)
         self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
         self.camera_listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE, height=5)
         for cam in self.camera_options:
             self.camera_listbox.insert(tk.END, f"Camera {cam}")
-        self.camera_listbox.pack(pady=5)
+        # self.camera_listbox.pack(side="left", pady=5)
+        self.camera_listbox.grid(row=5, column=1, pady=10)
+
+        # Recording indicator label
+        self.record_label = tk.Label(
+            self.root,
+            text="● Not Recording",
+            fg="gray",
+            font=("Arial", 12, "bold")
+        )
+        self.record_label.grid(row=6, column=1, pady=10)
 
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self._run_asyncio_loop, daemon=True).start()
