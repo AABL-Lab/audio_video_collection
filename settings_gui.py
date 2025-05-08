@@ -24,10 +24,13 @@ class StartGUI:
         stop_btn = tk.Button(self.root, text="Stop Recording", command=self._on_stop)
         stop_btn.pack(side="top", pady=5)
 
+        # Audio channel selection
         self.audio_channels = tk.Label(self.root, text="Enter number of audio channels:")
         self.audio_channels.pack()
         self.num_channels = tk.Entry(self.root)
+        self.num_channels.insert(0, "2") # enter default value
         self.num_channels.pack(pady=5)
+        
 
 
         # Camera selection label
@@ -47,9 +50,6 @@ class StartGUI:
     def _count_cameras(self):
         """
         Counts the number of connected cameras.
-
-        Returns:
-            int: The number of connected cameras.
         """
         max_tested = 10
         count = 0
@@ -70,11 +70,11 @@ class StartGUI:
 
     async def _on_start(self):
         selected_indices = self.camera_listbox.curselection()
-        selected_cameras = [self.camera_options[i] for i in selected_indices]
+        self.CAMERA_IDS = [self.camera_options[i] for i in selected_indices]
         self.NUM_CHANNELS = int(self.num_channels.get())
         
         print("Async Start button clicked!")
-        await self.record_audio_video(selected_cameras)
+        await self.record_audio_video()
         self.root.quit()
         self.root.destroy() 
         print("Async task completed!")
@@ -89,25 +89,21 @@ class StartGUI:
     def run(self):
         self.root.mainloop()
 
-    async def record_audio_video(self, selected_cameras):
+    async def record_audio_video(self):
         print("recording audio video")
-        CAMERA_IDS = selected_cameras #[0, 1]
-        CAMERA_OUTPUT_FILES = [f"camera{num}.mp4" for num in selected_cameras]
-        # ['camera0_output.mp4', 'camera1_output.mp4']
+        CAMERA_OUTPUT_FILES = [f"camera{num}.mp4" for num in self.CAMERA_IDS]
 
         AUDIO_OUTPUT_FILE = "output_audio"
-        # NUM_CHANNELS = 1 # use >1 channel when using m-audio
 
         self.audio_recorder = AudioRecorder(output_file=AUDIO_OUTPUT_FILE, channels=self.NUM_CHANNELS)
         self.video_recorder = VideoRecorder(
-            CAMERA_IDS,  
+            self.CAMERA_IDS,  
             CAMERA_OUTPUT_FILES
         )
         print("awaiting")
         await asyncio.gather(
             self.audio_recorder.record(),
             self.video_recorder.record()
-            # self.wait_for_q_to_quit(audio_recorder, video_recorder)
         )
 
 # To run the GUI
