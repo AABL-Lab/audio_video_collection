@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import asyncio
 import threading
 from collect_audio import AudioRecorder
@@ -17,11 +18,15 @@ class StartGUI:
         self.root.geometry("300x250")
 
         # Save Location
-        self.save_location_label = tk.Label(self.root, text="Enter desired save location:")
-        self.save_location_label.pack()
-        self.save_location = tk.Entry(self.root)
-        self.save_location.insert(0, "") # enter default value
-        self.save_location.pack(pady=5)
+        # self.save_location_label = tk.Label(self.root, text="Enter desired save location:")
+        # self.save_location_label.pack()
+        # self.save_location = tk.Entry(self.root)
+        # self.save_location.insert(0, "") # enter default value
+        # self.save_location.pack(pady=5)
+        self.save_location = tk.Entry(self.root, width=50)
+        self.save_location.pack(padx=10, pady=10)
+        self.select_save_button = tk.Button(self.root, text="Select Save Location", command=self.select_save_location)
+        self.select_save_button.pack(padx=10, pady=10)
         
 
         # Start button
@@ -53,9 +58,6 @@ class StartGUI:
         threading.Thread(target=self._run_asyncio_loop, daemon=True).start()
 
     def _count_cameras(self):
-        """
-        Counts the number of connected cameras.
-        """
         max_tested = 10
         count = 0
         for i in range(max_tested):
@@ -65,6 +67,11 @@ class StartGUI:
                 cap.release()
         return count
 
+    def select_save_location(self):
+        folder_path = filedialog.askdirectory(title="Select Folder to Save")
+        if folder_path:
+            self.save_location.delete(0, tk.END)
+            self.save_location.insert(0, folder_path+"/")
 
     def _run_asyncio_loop(self):
         asyncio.set_event_loop(self.loop)
