@@ -51,21 +51,21 @@ class VideoRecorder:
         self.stop_event.set()
 
 
-async def wait_for_q_to_quit(recorder):
-    print("[INFO] Press 'q' then Enter to stop recording...")
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, input, ">> ")
-    recorder.stop()
+# async def wait_for_q_to_quit(recorder):
+#     print("[INFO] Press 'q' then Enter to stop recording...")
+#     loop = asyncio.get_running_loop()
+#     await loop.run_in_executor(None, input, ">> ")
+#     recorder.stop()
 
-async def record_video():
-    camera_ids = [0, 1]
-    output_files = ['camera0_output.mp4', 'camera1_output.mp4']
-    recorder = VideoRecorder(camera_ids, output_files)
+# async def record_video():
+#     camera_ids = [0, 1]
+#     output_files = ['camera0_output.mp4', 'camera1_output.mp4']
+#     recorder = VideoRecorder(camera_ids, output_files)
 
-    await asyncio.gather(
-        recorder.record(),
-        wait_for_q_to_quit(recorder)
-    )
+#     await asyncio.gather(
+#         recorder.record(),
+#         wait_for_q_to_quit(recorder)
+#     )
 
 if __name__ == "__main__":
     asyncio.run(record_video())

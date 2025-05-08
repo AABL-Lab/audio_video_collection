@@ -1,4 +1,6 @@
-# Groups-Graphs
+# Automated Audio and Video Collection
+
+This package is for collecting simultaneous audio and video data for studies. 
 
 ### Getting Set Up
 - To begin, make sure that your microphone is connected. If using the lapel audio recorders, connect your computer to the 'M-Track Eight' via usb and select it as your input device.
