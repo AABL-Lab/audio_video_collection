@@ -1,13 +1,17 @@
 import tkinter as tk
 from tkinter import messagebox
-# import record_audio_video 
 import asyncio
 import threading
 from collect_audio import AudioRecorder
 from collect_video import VideoRecorder
+import cv2
+import sounddevice as sd
 
 class StartGUI:
     def __init__(self):
+        num_cameras = self._count_cameras()
+        print(f"Number of connected cameras: {num_cameras}")
+
         self.root = tk.Tk()
         self.root.title("Multi-Camera Selector")
         self.root.geometry("300x250")
@@ -20,12 +24,18 @@ class StartGUI:
         stop_btn = tk.Button(self.root, text="Stop Recording", command=self._on_stop)
         stop_btn.pack(side="top", pady=5)
 
+        self.audio_channels = tk.Label(self.root, text="Enter number of audio channels:")
+        self.audio_channels.pack()
+        self.num_channels = tk.Entry(self.root)
+        self.num_channels.pack(pady=5)
+
+
         # Camera selection label
         self.camera_label = tk.Label(self.root, text="Select Cameras:")
         self.camera_label.pack()
 
         # Multi-selection Listbox for cameras
-        self.camera_options = [0, 1, 2]  # Simulated camera indices
+        self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
         self.camera_listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE, height=5)
         for cam in self.camera_options:
             self.camera_listbox.insert(tk.END, f"Camera {cam}")
@@ -34,14 +44,23 @@ class StartGUI:
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self._run_asyncio_loop, daemon=True).start()
 
-    # def _on_start(self):
-    #     record_audio_video.record_audio_video()
-    #     self.root.quit()
-    #     self.root.destroy()    
-        # selected_indices = self.camera_listbox.curselection()
-        # selected_cameras = [self.camera_options[i] for i in selected_indices]
-        # print(f"Start button clicked! Selected cameras: {selected_cameras}")
-        # messagebox.showinfo("Selected Cameras", f"You selected: {selected_cameras}")
+    def _count_cameras(self):
+        """
+        Counts the number of connected cameras.
+
+        Returns:
+            int: The number of connected cameras.
+        """
+        max_tested = 10
+        count = 0
+        for i in range(max_tested):
+            cap = cv2.VideoCapture(i)
+            if cap.isOpened():
+                count += 1
+                cap.release()
+        return count
+
+
     def _run_asyncio_loop(self):
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
@@ -50,9 +69,12 @@ class StartGUI:
         asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
 
     async def _on_start(self):
+        selected_indices = self.camera_listbox.curselection()
+        selected_cameras = [self.camera_options[i] for i in selected_indices]
+        self.NUM_CHANNELS = int(self.num_channels.get())
+        
         print("Async Start button clicked!")
-        # record_audio_video.record_audio_video()
-        await self.record_audio_video()
+        await self.record_audio_video(selected_cameras)
         self.root.quit()
         self.root.destroy() 
         print("Async task completed!")
@@ -60,7 +82,6 @@ class StartGUI:
     def _on_stop(self):
         self.audio_recorder.stop()
         self.video_recorder.stop()
-        # self.stop_event.set()
         self.root.quit()
         self.root.destroy()    
         
@@ -68,15 +89,16 @@ class StartGUI:
     def run(self):
         self.root.mainloop()
 
-    async def record_audio_video(self):
+    async def record_audio_video(self, selected_cameras):
         print("recording audio video")
-        CAMERA_IDS = [0, 1]
-        CAMERA_OUTPUT_FILES = ['camera0_output.mp4', 'camera1_output.mp4']
+        CAMERA_IDS = selected_cameras #[0, 1]
+        CAMERA_OUTPUT_FILES = [f"camera{num}.mp4" for num in selected_cameras]
+        # ['camera0_output.mp4', 'camera1_output.mp4']
 
         AUDIO_OUTPUT_FILE = "output_audio"
-        NUM_CHANNELS = 1 # use >1 channel when using m-audio
+        # NUM_CHANNELS = 1 # use >1 channel when using m-audio
 
-        self.audio_recorder = AudioRecorder(output_file=AUDIO_OUTPUT_FILE, channels=NUM_CHANNELS)
+        self.audio_recorder = AudioRecorder(output_file=AUDIO_OUTPUT_FILE, channels=self.NUM_CHANNELS)
         self.video_recorder = VideoRecorder(
             CAMERA_IDS,  
             CAMERA_OUTPUT_FILES
@@ -87,12 +109,6 @@ class StartGUI:
             self.video_recorder.record()
             # self.wait_for_q_to_quit(audio_recorder, video_recorder)
         )
-    # async def wait_for_q_to_quit(self, audio_recorder, video_recorder):
-    #     print("[INFO] Press 'q' then Enter to stop recording...")
-    #     loop = asyncio.get_running_loop()
-    #     gui = StopRecordingGUI(audio_recorder, video_recorder)
-    #     gui.start()
-    #     await gui.wait_for_stop()
 
 # To run the GUI
 if __name__ == "__main__":
