@@ -9,6 +9,7 @@ import cv2
 import sounddevice as sd
 from tkinter import ttk
 from tkinter import font
+import os
 
 class StartGUI:
     def __init__(self):
@@ -17,6 +18,7 @@ class StartGUI:
 
         self.root = tk.Tk()
         self.root.title("Audio/Video Data Collection")
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self.root.geometry("330x400")
 
         # Start button
@@ -32,34 +34,28 @@ class StartGUI:
 
         # Save Location
         self.save_location = ttk.Entry(self.root, width=15)
-        # self.save_location.pack(side="left", padx=10, pady=10)
         self.save_location.grid(row=3, column=0, pady=10)
 
         
 
         self.select_save_button = tk.Button(self.root, text="Select Save Location", command=self.select_save_location)
-        # self.select_save_button.pack(side="right", padx=10, pady=10)
         self.select_save_button.grid(row=3, column=1, pady=10)
 
         # Audio channel selection
         self.audio_channels = tk.Label(self.root, text="# of audio channels:")
-        # self.audio_channels.pack(side="left")
         self.audio_channels.grid(row=4, column=0, pady=10)
         self.num_channels = tk.Entry(self.root)
         self.num_channels.insert(0, "2") # enter default value
-        # self.num_channels.pack(side="left", pady=5)
         self.num_channels.grid(row=4, column=1, pady=10)
         
 
         # Camera selection 
         self.camera_label = tk.Label(self.root, text="Select Cameras:")
-        # self.camera_label.pack(side="left")
         self.camera_label.grid(row=5, column=0)
         self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
         self.camera_listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE, height=5)
         for cam in self.camera_options:
             self.camera_listbox.insert(tk.END, f"Camera {cam}")
-        # self.camera_listbox.pack(side="left", pady=5)
         self.camera_listbox.grid(row=5, column=1, pady=10)
 
         # Recording indicator label
@@ -94,28 +90,61 @@ class StartGUI:
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
+    def _check_file_exists(self, filename):
+        filepath = os.path.join(self.SAVE_LOCATION, filename)
+
+        if os.path.isfile(filepath):
+            return True
+        else:
+            return False
+
+    def _check_any_camera_file_exists(self,filename_list):
+        for filename in self.CAMERA_OUTPUT_FILES:
+            if os.path.isfile(filename):
+                print("camera file exists")
+                return True
+            else:
+                print("camera file does NOT exist")
+                return False
+
+    def _save_updated_entry_data(self):
+        self.SAVE_LOCATION = self.save_location.get()
+        selected_indices = self.camera_listbox.curselection() 
+        self.CAMERA_IDS = [self.camera_options[i] for i in selected_indices]
+        self.CAMERA_OUTPUT_FILES = [f"{self.SAVE_LOCATION}camera{num}.mp4" for num in self.CAMERA_IDS]
+        self.NUM_CHANNELS = int(self.num_channels.get())
+
     def _on_start_wrapper(self):
-        asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
+        # check if we'll be overwriting any files
+        self._save_updated_entry_data()
+        if self._check_any_camera_file_exists(self.CAMERA_OUTPUT_FILES):
+            response = messagebox.askyesno("Confirmation", "This may overwrite an existing file. Continue anyway?")
+            if response: # if the user wants to continue anyway
+                # start recording
+                asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
+        # if we're not overwriting any files, just start the recording
+        else: 
+            asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
+
 
     async def _on_start(self):
-        self.SAVE_LOCATION = self.save_location.get()
-        selected_indices = self.camera_listbox.curselection()
-        self.CAMERA_IDS = [self.camera_options[i] for i in selected_indices]
-        self.NUM_CHANNELS = int(self.num_channels.get())
-        
-        print("Async Start button clicked!")
+        self._save_updated_entry_data()
         self.toggle_recording(True)
         await self.record_audio_video()
-        self.root.quit()
-        self.root.destroy() 
-        print("Async task completed!")
+
 
     def _on_stop(self):
-        self.audio_recorder.stop()
-        self.video_recorder.stop()
-        self.toggle_recording(False)
-        # self.root.quit()
-        # self.root.destroy()    
+        try:
+            self.audio_recorder.stop()
+            self.video_recorder.stop()
+            self.toggle_recording(False)
+        except: 
+            print("No recording to stop")
+
+    def _on_close(self):
+        # when user closes the window
+        self._on_stop()
+        self.root.destroy()
         
 
     def run(self):
@@ -123,13 +152,11 @@ class StartGUI:
 
     async def record_audio_video(self):
         print("recording audio video")
-        CAMERA_OUTPUT_FILES = [f"{self.SAVE_LOCATION}camera{num}.mp4" for num in self.CAMERA_IDS]
 
         self.audio_recorder = AudioRecorder(save_location=self.SAVE_LOCATION, channels=self.NUM_CHANNELS)
-        print("audio recorded")
         self.video_recorder = VideoRecorder(
             self.CAMERA_IDS,  
-            CAMERA_OUTPUT_FILES
+            self.CAMERA_OUTPUT_FILES
         )
         print("awaiting")
         await asyncio.gather(
