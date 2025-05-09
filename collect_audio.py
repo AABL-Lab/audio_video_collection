@@ -27,7 +27,7 @@ class AudioRecorder:
 
         try:
             with sd.InputStream(samplerate=self.samplerate, channels=self.channels, callback=self._callback):
-                print(f"[INFO] Recording audio to '{self.save_location}_chX.wav' for each channel...")
+                print(f"[INFO] Recording audio for each channel...")
                 while not self.stop_event.is_set():
                     data = self.q.get()  # shape: (frames, channels)
                     for ch in range(self.channels):
