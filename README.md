@@ -8,13 +8,15 @@ This package is for collecting simultaneous audio and video data for studies.
 - Check that webcams are connected to the computer via usb.
 
 ### Begin Recording
-- To begin audio and video recording, simply run ``record_audio-video.py``
+- To start the gui, simply run ``record_data.py``
+- Hit the 'Record' and 'Stop' buttons to start/stop recordings
+- Select the audio/video save location using the `Select Save Location` box. By default, files are saved to the current directory
+- Input the number of audio channels in the textbox. (If using the Sennheiser, you'll choose between 1-4 audio channels, depending on how many lapel mics are being used)
+- Use the selection box to select the cameras you'd like to use (NOTE: for now, only one camera can be selected at once)
 
-- Audio and video recording will continue until you enter ``q`` into terminal
-- Video data can be collected from multiple cameras simultaneously. To add/remove cameras, modify the ``CAMERA_IDS`` and ``CAMERA_OUTPUT_FILES`` lists in ``record_audio-video.py``. 
-- Modify the number of audio channels by editing ``NUM_CHANNELS``.
-- Each audio channel is saved to a separate .wav file. Their names follow the pattern: ``{self.output_file}_ch{ch+1}.wav``. 
-- To change the audio output file name, modify ``AUDIO_OUTPUT_FILE`` in ``record_audio-video.py``.
+
+
+
 
 <!-- ### ``people_boxes.py``
 Run this file to track the positions of team members over time. 
