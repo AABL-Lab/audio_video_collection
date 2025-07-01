@@ -13,8 +13,9 @@ import os
 
 class StartGUI:
     def __init__(self):
-        num_cameras = self._count_cameras()
-        print(f"Number of connected cameras: {num_cameras}")
+        #num_cameras = self._count_cameras()
+        self.camera_options = self._get_working_cameras()
+        print(f"Number of connected cameras: {len(self.camera_options)}")
 
         self.root = tk.Tk()
         self.root.title("Audio/Video Data Collection")
@@ -52,10 +53,10 @@ class StartGUI:
         # Camera selection 
         self.camera_label = tk.Label(self.root, text="Select Cameras:")
         self.camera_label.grid(row=5, column=0)
-        self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
+        #self.camera_options = [i for i in range(num_cameras)]  # Simulated camera indices
         self.camera_listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE, height=5)
-        for cam in self.camera_options:
-            self.camera_listbox.insert(tk.END, f"Camera {cam}")
+        for idx, dev in self.camera_options:
+            self.camera_listbox.insert(tk.END, f"/dev/video{dev}")
         self.camera_listbox.grid(row=5, column=1, pady=10)
 
         # Recording indicator label
@@ -69,6 +70,15 @@ class StartGUI:
 
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self._run_asyncio_loop, daemon=True).start()
+
+    def _get_working_cameras(self):
+        working = []
+        for i in range(10):
+            cap = cv2.VideoCapture(i)  # Use simpler OpenCV capture without GStreamer
+            if cap.isOpened():
+                working.append((len(working), i))  # logical index, actual device number
+                cap.release()
+        return working
 
     def _count_cameras(self):
         max_tested = 10
@@ -110,8 +120,8 @@ class StartGUI:
     def _save_updated_entry_data(self):
         self.SAVE_LOCATION = self.save_location.get()
         selected_indices = self.camera_listbox.curselection() 
-        self.CAMERA_IDS = [self.camera_options[i] for i in selected_indices]
-        self.CAMERA_OUTPUT_FILES = [f"{self.SAVE_LOCATION}camera{num}.mp4" for num in self.CAMERA_IDS]
+        self.CAMERA_IDS = [self.camera_options[i][1] for i in selected_indices]  # actual /dev/videoX
+        self.CAMERA_OUTPUT_FILES = [f"{self.SAVE_LOCATION}camera{num}" for num in self.CAMERA_IDS]
         self.NUM_CHANNELS = int(self.num_channels.get())
 
     def _on_start_wrapper(self):
