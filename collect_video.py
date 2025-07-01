@@ -14,6 +14,8 @@ class VideoRecorder:
         self.fps = fps
         self.codec = codec
         self.stop_event = threading.Event()
+        self.lock = threading.Lock()
+        self.latest_frames = {cid: None for cid in self.camera_ids}  # Shared frame buffers
         self.executor = ThreadPoolExecutor(max_workers=len(camera_ids))
 
     def _record_camera(self, camera_id, output_file_base):
@@ -40,6 +42,9 @@ class VideoRecorder:
                 break
 
             current_writer.write(frame)
+
+            with self.lock:
+                self.latest_frames[camera_id] = frame.copy()  # safely update frame
 
             # Rotate file every minute
             if time.time() - start_time >= 60:

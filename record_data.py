@@ -10,6 +10,8 @@ import sounddevice as sd
 from tkinter import ttk
 from tkinter import font
 import os
+from PIL import Image, ImageTk
+import numpy as np
 
 class StartGUI:
     def __init__(self):
@@ -71,6 +73,38 @@ class StartGUI:
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self._run_asyncio_loop, daemon=True).start()
 
+    def create_camera_windows(self):
+        self.camera_windows = {}
+        for cam_id in self.CAMERA_IDS:
+            win = tk.Toplevel(self.root)
+            win.title(f"Camera {cam_id}")
+
+            # Create a black placeholder image (640x480 or your desired size)
+            blank = np.zeros((480, 640, 3), dtype=np.uint8)
+            img = Image.fromarray(blank)
+            imgtk = ImageTk.PhotoImage(image=img)
+
+            label = tk.Label(win, image=imgtk)
+            label.imgtk = imgtk  # prevent GC
+            label.pack()
+
+            self.camera_windows[cam_id] = (win, label)
+
+    def update_camera_previews(self):
+        if hasattr(self, 'video_recorder') and hasattr(self, 'camera_windows'):
+            with self.video_recorder.lock:
+                for cam_id, (win, label) in self.camera_windows.items():
+                    frame = self.video_recorder.latest_frames.get(cam_id)
+                    if frame is not None:
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        img = Image.fromarray(frame_rgb)
+                        imgtk = ImageTk.PhotoImage(image=img)
+
+                        label.imgtk = imgtk  # prevent GC
+                        label.config(image=imgtk)
+
+        self.root.after(30, self.update_camera_previews)
+
     def _get_working_cameras(self):
         working = []
         for i in range(10):
@@ -79,16 +113,6 @@ class StartGUI:
                 working.append((len(working), i))  # logical index, actual device number
                 cap.release()
         return working
-
-    def _count_cameras(self):
-        max_tested = 10
-        count = 0
-        for i in range(max_tested):
-            cap = cv2.VideoCapture(i)
-            if cap.isOpened():
-                count += 1
-                cap.release()
-        return count
 
     def select_save_location(self):
         folder_path = filedialog.askdirectory(title="Select Folder to Save")
@@ -129,12 +153,12 @@ class StartGUI:
         self._save_updated_entry_data()
         if self._check_any_camera_file_exists(self.CAMERA_OUTPUT_FILES):
             response = messagebox.askyesno("Confirmation", "This may overwrite an existing file. Continue anyway?")
-            if response: # if the user wants to continue anyway
-                # start recording
-                asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
-        # if we're not overwriting any files, just start the recording
-        else: 
-            asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
+            if not response: # if the user DOES NOT want to continue anyway then return 
+                return
+        # Start recording
+        asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
+        self.create_camera_windows()
+        self.update_camera_previews()
 
 
     async def _on_start(self):
@@ -148,8 +172,13 @@ class StartGUI:
             self.audio_recorder.stop()
             self.video_recorder.stop()
             self.toggle_recording(False)
-        except: 
-            print("No recording to stop")
+
+            for win, _ in self.camera_windows.values():
+                win.destroy()
+            self.camera_windows = {}
+
+        except Exception as e:
+            print(f"No recording to stop: {e}")
 
     def _on_close(self):
         # when user closes the window
