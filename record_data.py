@@ -157,8 +157,9 @@ class StartGUI:
                 return
         # Start recording
         asyncio.run_coroutine_threadsafe(self._on_start(), self.loop)
-        self.create_camera_windows()
-        self.update_camera_previews()
+        if len(self.CAMERA_IDS) > 0:
+            self.create_camera_windows()
+            self.update_camera_previews()
 
 
     async def _on_start(self):
@@ -173,9 +174,10 @@ class StartGUI:
             self.video_recorder.stop()
             self.toggle_recording(False)
 
-            for win, _ in self.camera_windows.values():
-                win.destroy()
-            self.camera_windows = {}
+            if len(self.CAMERA_IDS) > 0:
+                for win, _ in self.camera_windows.values():
+                    win.destroy()
+                self.camera_windows = {}
 
         except Exception as e:
             print(f"No recording to stop: {e}")
@@ -191,12 +193,14 @@ class StartGUI:
 
     async def record_audio_video(self):
 
+        print('before audio')
         self.audio_recorder = AudioRecorder(save_location=self.SAVE_LOCATION, channels=self.NUM_CHANNELS)
+        print("after audio")
         self.video_recorder = VideoRecorder(
             self.CAMERA_IDS,  
             self.CAMERA_OUTPUT_FILES
         )
-        
+        print("after video")
         print("awaiting")
         await asyncio.gather(
             self.audio_recorder.record(),

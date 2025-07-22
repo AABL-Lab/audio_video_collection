@@ -20,12 +20,14 @@ class AudioRecorder:
     def _record_audio(self):
         # Create one SoundFile per channel
         print(self.save_location)
+        print("HERE 2")
         files = [
             sf.SoundFile(f"{self.save_location}_ch{ch+1}.wav", mode='w', samplerate=self.samplerate, channels=1)
             for ch in range(self.channels)
         ]
 
         try:
+            print(sd.InputStream())
             with sd.InputStream(samplerate=self.samplerate, channels=self.channels, callback=self._callback):
                 print(f"[INFO] Recording audio for each channel...")
                 while not self.stop_event.is_set():
@@ -40,6 +42,7 @@ class AudioRecorder:
 
     async def record(self):
         self.thread = threading.Thread(target=self._record_audio)
+        print("HERE 1")
         self.thread.start()
 
     def stop(self):

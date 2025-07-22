@@ -15,8 +15,9 @@ class VideoRecorder:
         self.codec = codec
         self.stop_event = threading.Event()
         self.lock = threading.Lock()
-        self.latest_frames = {cid: None for cid in self.camera_ids}  # Shared frame buffers
-        self.executor = ThreadPoolExecutor(max_workers=len(camera_ids))
+        if len(self.camera_ids) > 0:
+            self.latest_frames = {cid: None for cid in self.camera_ids}  # Shared frame buffers
+            self.executor = ThreadPoolExecutor(max_workers=len(camera_ids))
 
     def _record_camera(self, camera_id, output_file_base):
         cap = cv2.VideoCapture(camera_id, cv2.CAP_V4L2) # I set this manually because it wasn't totally working without it, if there are strange things look into this
