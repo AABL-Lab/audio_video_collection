@@ -193,15 +193,12 @@ class StartGUI:
 
     async def record_audio_video(self):
 
-        print('before audio')
         self.audio_recorder = AudioRecorder(save_location=self.SAVE_LOCATION, channels=self.NUM_CHANNELS)
-        print("after audio")
         self.video_recorder = VideoRecorder(
             self.CAMERA_IDS,  
             self.CAMERA_OUTPUT_FILES
         )
-        print("after video")
-        print("awaiting")
+
         await asyncio.gather(
             self.audio_recorder.record(),
             self.video_recorder.record()
