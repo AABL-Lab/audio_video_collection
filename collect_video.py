@@ -2,6 +2,7 @@ import cv2
 import time
 import asyncio
 import datetime
+import platform
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -20,7 +21,10 @@ class VideoRecorder:
             self.executor = ThreadPoolExecutor(max_workers=len(camera_ids))
 
     def _record_camera(self, camera_id, output_file_base):
-        cap = cv2.VideoCapture(camera_id, cv2.CAP_V4L2) # I set this manually because it wasn't totally working without it, if there are strange things look into this
+        if platform.system() == 'Linux':
+            cap = cv2.VideoCapture(camera_id, cv2.CAP_V4L2) # I set this manually because it wasn't totally working without it, if there are strange things look into this
+        else:
+            cap = cv2.VideoCapture(camera_id)  # Let OpenCV choose default backend for Windows/macOS
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         cap.set(cv2.CAP_PROP_FPS, self.fps)

@@ -196,8 +196,7 @@ class StartGUI:
         self.audio_recorder = AudioRecorder(save_location=self.SAVE_LOCATION, channels=self.NUM_CHANNELS)
         self.video_recorder = VideoRecorder(
             self.CAMERA_IDS,  
-            self.CAMERA_OUTPUT_FILES
-        )
+            self.CAMERA_OUTPUT_FILES)
 
         await asyncio.gather(
             self.audio_recorder.record(),
