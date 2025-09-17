@@ -132,7 +132,7 @@ class StartGUI:
         else:
             return False
 
-    def _check_any_camera_file_exists(self,filename_list):
+    def _check_any_camera_file_exists(self, filename_list):
         for filename in self.CAMERA_OUTPUT_FILES:
             if os.path.isfile(filename):
                 print("camera file exists")

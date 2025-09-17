@@ -20,11 +20,22 @@ class VideoRecorder:
             self.latest_frames = {cid: None for cid in self.camera_ids}  # Shared frame buffers
             self.executor = ThreadPoolExecutor(max_workers=len(camera_ids))
 
+    def try_open_camera(self, camera_id, backend, retries=5, delay=1):
+        for attempt in range(retries):
+            cap = cv2.VideoCapture(camera_id, backend)
+            if cap.isOpened():
+                return cap
+            print(f"[WARN] Retry opening camera {camera_id} (attempt {attempt+1}/{retries})...")
+            time.sleep(delay)
+        return None
+
     def _record_camera(self, camera_id, output_file_base):
-        if platform.system() == 'Linux':
-            cap = cv2.VideoCapture(camera_id, cv2.CAP_V4L2) # I set this manually because it wasn't totally working without it, if there are strange things look into this
-        else:
-            cap = cv2.VideoCapture(camera_id)  # Let OpenCV choose default backend for Windows/macOS
+        backend = cv2.CAP_V4L2 if platform.system() == 'Linux' else cv2.CAP_DSHOW  # CAP_DSHOW for windows, CAPV4l2 for linux.
+        cap = self.try_open_camera(camera_id, backend)
+        if cap is None:
+            print(f"[ERROR] Could not open camera {camera_id} after retries.")
+            return
+
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         cap.set(cv2.CAP_PROP_FPS, self.fps)
